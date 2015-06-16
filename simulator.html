@@ -9,7 +9,7 @@
 				background-color:#EEE;
 				text-align:center;
 			}
-			div#area > div, div#gauss > div {
+			div#area > div, div#graph > div {
 				background-color:#FFF;
 				border:1px solid #000;
 			}
@@ -19,13 +19,22 @@
 			}
 		</style>
 		<script type="text/JavaScript">
+			/*
+			 * Random value from min to max
+			 */
 			function getRandomInt(min,max){
 				return Math.floor(Math.random()*(max-min+1))+min;
 			}
 
+			/*
+			 * Special global varriables
+			 */
 			var HOWMUCH=10;
 			var FLAG=0;
 
+			/*
+			 * Clear elements array
+			 */
 			var elements=new Array();
 			for(var i=0;i<19;i++){
 				elements[i]=0;
@@ -34,78 +43,119 @@
 			$(document).ready(function(){
 				$('input').removeAttr('disabled');
 
+				/* 
+				 * Main stage area size
+				 */
 				var area_size={
-					x:400,
-					y:600
+					x:600,
+					y:400
 				};
 
+				/*
+				 * Create main stage and base layer
+				 */
 				var stage=new Kinetic.Stage({
 					container:'area',
-					height:area_size.x,
-					width:area_size.y
+					height:area_size.y,
+					width:area_size.x
 				});
-
 				var baselayer=new Kinetic.Layer();
 
+				/*
+				 * Add main point and his area
+				 */
 				var mainpoint=new Kinetic.Circle({
 					fill:'#000',
-					x:(area_size.y/2),
-					y:(area_size.x/2),
+					x:(area_size.x/2),
+					y:(area_size.y/2),
 					radius:2
 				});
 				var mainpoint_area=new Kinetic.Circle({
 					fill:'#0000FF',
-					x:(area_size.y/2),
-					y:(area_size.x/2),
+					x:(area_size.x/2),
+					y:(area_size.y/2),
 					opacity:.4,
 					radius:40
 				});
-				baselayer.add(mainpoint,mainpoint_area);
+				baselayer.add(mainpoint,mainpoint_area); /* Add this objects to base layer */
 
-				stage.add(baselayer).draw();
+				stage.add(baselayer).draw(); /* Add base layer to stage and draw */
 
-				var gauss=new Kinetic.Stage({
-					container:'gauss',
+				/*
+				 * Create graph stage and base layer
+				 */
+				var graph=new Kinetic.Stage({
+					container:'graph',
 					height:128,
 					width:294
 				});
-				var gausslayer=new Kinetic.Layer();
-				gauss.add(gausslayer).draw();
+				var graphlayer=new Kinetic.Layer();
+				graph.add(graphlayer).draw(); /* Add graph layer to stage and draw it */
 
+				/*
+				 * Create new work layer and add it to main stage
+				 */
 				var layer=new Kinetic.Layer();
 				stage.add(layer);
-				var point,point_area,line,text,p,t,x,y,rad,inter,a,b;
-				$('input.one').on('click',function(){
-					FLAG=0;
-					$('input').attr('disabled','disabled');
 
+				var point,point_area,line,text,p,t,x,y,rad,inter,a,b; /* Declare variables */
+
+				/*
+				 * When rand one point
+				 */
+				$('input.one').on('click',function(){
+					FLAG=0; /* Set flag to 0 */
+					$('input').attr('disabled','disabled'); /* Display inputs */
+
+					/*
+					 * Serialization
+					 */
 					y=x=0;
 					for(var a=0;a<$('input#series').val();a++){
-						x+=getRandomInt(0,area_size.y/$('input#series').val());
-						y+=getRandomInt(0,area_size.x/$('input#series').val());
+						x+=getRandomInt(0,area_size.x/$('input#series').val());
+						y+=getRandomInt(0,area_size.y/$('input#series').val());
 					}
+
+					/*
+					 * Create point and add it to work layer and draw
+					 */
 					point=new Kinetic.Circle({
 						fill:'#F00',
 						x:x,
 						y:y,
 						radius:2
 					});
-					baselayer.add(point);
+					layer.add(point);
 					stage.draw();
 
+					/*
+					 * Increase drawn points
+					 */
 					p=$('div#text > span').text();
 					$('div#text > span').html(++p);
 
-					rad=Math.sqrt(Math.pow((x-(area_size.y/2)),2)+Math.pow((y-(area_size.x/2)),2));
+					/*
+					 * If point hit increase hit poitns
+					 */
+					rad=Math.sqrt(Math.pow((x-(area_size.x/2)),2)+Math.pow((y-(area_size.y/2)),2));
 					t=$('div#float > span').text();
 					if(rad<=40){
 						$('div#float > span').text(++t);
 					}
 
+					/*
+					 * Increase number of elements in array
+					 */
 					elements[Math.floor(rad/20)]++;
 
+					/*
+					 * Correct hit rate
+					 */
 					$('div#float_area > span').text(Math.round(t/p*1000)/1000);
 
+					/*
+					 * Create point area, distance line and distance text, add they to work layer and draw
+					 */
 					point_area=new Kinetic.Circle({
 						fill:'#0F0',
 						x:x,
@@ -123,13 +173,16 @@
 						fontFamily:'Calibri',
 						fontSize:12,
 						text:Math.round(rad*100)/100,
-						x:(x+(area_size.y/2))/2,
-						y:(y+(area_size.x/2))/2,
-						rotation:Math.atan((y-(area_size.x/2))/(x-(area_size.y/2)))*(180/Math.PI)
+						x:(x+(area_size.x/2))/2,
+						y:(y+(area_size.y/2))/2,
+						rotation:Math.atan((y-(area_size.y/2))/(x-(area_size.x/2)))*(180/Math.PI)
 					});
 					layer.add(point_area,line,text);
 					stage.draw();
 
+					/*
+					 * Area animations
+					 */
 					a=b=0;
 					inter=setInterval(function(){
 						a+=0.05;
@@ -139,7 +192,7 @@
 								b=rad;
 							}
 						}
-						line.points([x,y,((rad-b)/rad)*x+(b/rad)*(area_size.y/2),((rad-b)/rad)*y+(b/rad)*(area_size.x/2)]);
+						line.points([x,y,((rad-b)/rad)*x+(b/rad)*(area_size.x/2),((rad-b)/rad)*y+(b/rad)*(area_size.y/2)]);
 						point_area.opacity(a).radius(b);
 						stage.draw();
 						if(a>=0.4){
@@ -166,18 +219,35 @@
 						}
 					},50);
 				});
+
+				/*
+				 * When rand more points
+				 */
 				$('input.more').on('click',function(){
-					FLAG=0;
+					FLAG=0; /* Set flag to 0 */
 
+					/*
+					 * Loop create HOWMUCH points
+					 */
 					for(var a=0;a<HOWMUCH;a++){
+						/*
+						 * setTimeout() give us delay
+						 */
 						setTimeout(function(){
-							$('input').attr('disabled','disabled');
+							$('input').attr('disabled','disabled'); /* Display inputs */
 
+							/*
+							 * Serialization
+							 */
 							y=x=0;
 							for(var a=0;a<$('input#series').val();a++){
-								x+=getRandomInt(0,area_size.y/$('input#series').val());
-								y+=getRandomInt(0,area_size.x/$('input#series').val());
+								x+=getRandomInt(0,area_size.x/$('input#series').val());
+								y+=getRandomInt(0,area_size.y/$('input#series').val());
 							}
+
+							/*
+							 * Create point and add it to work layer and draw
+							 */
 							point=new Kinetic.Circle({
 								fill:'#F00',
 								x:x,
@@ -187,45 +257,81 @@
 							baselayer.add(point);
 							stage.draw();
 
+							/*
+							 * Increase drawn points
+							 */
 							p=$('div#text > span').text();
 							$('div#text > span').html(++p);
 
-							rad=Math.sqrt(Math.pow((x-(area_size.y/2)),2)+Math.pow((y-(area_size.x/2)),2));
+							/*
+							 * If point hit increase hit poitns
+							 */
+							rad=Math.sqrt(Math.pow((x-(area_size.x/2)),2)+Math.pow((y-(area_size.y/2)),2));
 							t=$('div#float > span').text();
 							if(rad<=40){
 								$('div#float > span').text(++t);
 							}
 
+							/*
+							 * Increase number of elements in array
+							 */
 							elements[Math.floor(rad/20)]++;
 
+							/*
+							 * Correct hit rate
+							 */
 							$('div#float_area > span').text(Math.round(t/p*1000)/1000);
 						},a*100);
 					}
 
+					/*
+					 * After loop inputs will be activated
+					 */
 					setTimeout(function(){
 						$('input').removeAttr('disabled');
 					},(HOWMUCH*100)+100);
 				});
+
+				/*
+				 * When change multipler
+				 */
 				$('input.change[type="button"]').on('click',function(){
 					var val=$('input.change[type="text"]').val();
 					if(val>=5){
-						$('input.more').val('Random '+val);
-						HOWMUCH=val;
+						$('input.more').val('Random '+val); /* Change input value */
+						HOWMUCH=val; /* Set HOWMUCH */
 					}
 				});
-				$('input#draw').on('click',function(){
-					FLAG=1;
 
-					var square,max=0,fill;
+				/*
+				 * When draw graph
+				 */
+				$('input#draw').on('click',function(){
+					FLAG=1; /* Set flag to 1 */
+
+					var square,max=0,fill; /* Declare variables */
+
+					/*
+					 * Get max value from elements array
+					 */
 					for(var i=0;i<19;i++){
 						if(elements[i]>max){
 							max=elements[i];
 						}
 					}
 
-					gausslayer.removeChildren();
+					/*
+					 * Clear layer
+					 */
+					graphlayer.removeChildren();
 
+					/*
+					 * Print graph
+					 */
 					for(var i=18;i>=0;i--){
+						/*
+						 * Set color
+						 */
 						if((i%6)==0){
 							fill='#0F0';
 						}
@@ -244,6 +350,10 @@
 						else{
 							fill='#0FF';
 						}
+
+						/*
+						 * Create square
+						 */
 						square=new Kinetic.Line({
 							closed:true,
 							fill:fill,
@@ -252,6 +362,10 @@
 							x:3+(i*16),
 							y:0
 						});
+
+						/*
+						 * Add events to square
+						 */
 						square.on('mousemove',function(){
 							if(FLAG==1){
 								$('div#counter').text(elements[this.name()]);
@@ -260,11 +374,18 @@
 						.on('mouseleave',function(){
 							$('div#counter').text('-');
 						});
-						gausslayer.add(square);
-						gauss.draw();
+
+						/*
+						 * Add square to graph layer and print it
+						 */
+						graphlayer.add(square);
+						graph.draw();
 					}
-					
-					$('div#gauss').removeAttr('style');
+
+					/*
+					 * Show graphs div
+					 */
+					$('div#graph').removeAttr('style');
 				});
 			});
 		</script>
@@ -279,7 +400,7 @@
 		<div id="float">Hits: <span>0</span></div>
 		<div id="float_area">Hit rate: <span>0</span></div>
 		<input id="draw" type="button" value="Draw" />
-		<div id="gauss" style="display:none;"></div>
+		<div id="graph" style="display:none;"></div>
 		<div>Data:</div>
 		<div id="counter">-</div>
 	</body>
