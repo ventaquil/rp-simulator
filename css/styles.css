@@ -1,0 +1,12 @@
+body {
+	background-color:#EEE;
+	text-align:center;
+}
+div#area > div, div#graph > div {
+	background-color:#FFF;
+	border:1px solid #000;
+}
+input[type="text"] {
+	text-align:right;
+	width:90px;
+}
